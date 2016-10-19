@@ -31,6 +31,31 @@ This project aims to build an integrated recommender system with versatile featu
 ### Tools
 - Python, Myria, AWS
 
+
+### Progress
+
+1. Download data
+You need to have 'data' directory in your HOME.
+
+```bash
+chmod +x download.sh; ./download.sh 
+```
+
+This will takes several minutes.
+
+2. Preprocess data (current step)
+```bash
+python -m prepro.main
+```
+
+You can read code from prepro/main.
+'entry_list' is a list of each entry
+
+3. Create DB
+
+4. Implementation of Recommender System
+
+
 ### References
 - M. Pazzani, D. Billsus, Content-based Recommendation System.
 - G. Adomavicius and A. Tuzhilin, “Towards the next generation of recommender systems: a survey of the state-of-the-art and possible extensions,” IEEE Trans. on Data and Knowledge Engineering 17:6, pp. 734– 749, 2005.
