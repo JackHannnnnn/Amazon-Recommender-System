@@ -8,15 +8,10 @@ This is a class for base recommender - Classes supporting algorithms should inhe
 class BaseRecommender(object):
     def build(train_set):
 	"""
-	:param train_set : a dictionary of train_data which contains
-		'rating_list'  : a list of rating_id
-		'num_user' : number of distinct users
-		'num_prod' : number of distinct products
 	"""
 
-    def eval(test_set):
+    def eval():
 	"""
-	:param test_set : a dictionary of test_set to evaluate performance
 	:return performance (Mean Square Root Error)
 	"""
 	
@@ -27,9 +22,11 @@ class BaseRecommender(object):
 	:return ratings : list of predicted ratings
 	"""
 
-    def recommend(user, number):
+    def recommend(userIds, prodIds, ratings, number):
 	"""
-	:param user : user to recommend products. It can be a list of userId, or a single userId
+	:param userIds : user to recommend products. It can be a list of userId, or a single userId
+	:param prodIds : which product did user use. It can be a list of (list of prodIds), or a single list of prodIds
+	:param ratings : rating. It can be a list of (list of ratings), or a single list of prodIds
 	:params number : numbers of recommend products for each users
 	:return product : Amazon products of recommend. It can be a list of (list of prodIds), or a single list of prodIds
 
