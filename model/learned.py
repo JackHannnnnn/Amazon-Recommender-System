@@ -1,3 +1,10 @@
+"""
+Created on Thu Oct 27 2016
+
+@author: Sewon
+"""
+
+
 from model.reader import DataReader
 from model.base import BaseRecommender
 
@@ -58,7 +65,7 @@ class LearnedRecommender(BaseRecommender):
 	    tot_loss = 0.0
 	    for i in range(self.batch_num):
 		user_ids, prod_ids, ratings = self.reader.get_next_batch_train()
-		_, loss = sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
+		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
 		tot_loss += loss
 
 	    avg_loss = tot_loss / self.batch_num
@@ -73,8 +80,8 @@ class LearnedRecommender(BaseRecommender):
 	"""
 	tot_loss = 0.0
 	for i in range(self.batch_num):
-	    user_ids, prod_ids, ratings = self.reader_get_next_batch_text()
-	    loss = sess.run(self.loss, feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
+	    user_ids, prod_ids, ratings = self.reader_get_next_batch_test()
+	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
 	    tot_loss += loss
 	return tot_loss / self.batch_num
 

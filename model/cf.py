@@ -6,17 +6,17 @@ class CollaboFilterRecommender(BaseRecommender):
     def __init__(self, small, batch_size):
 	BaseRecommender.__init__(self, small, batch_size)
 
-    def build():
+    def build(self):
 	"""
 	build recommender system
 	"""
 
-    def eval():
+    def eval(self):
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""
 	
-    def predict(userIds, productIds):
+    def predict(self, userIds, productIds):
 	"""
 	:param userIds : list of userIds
 	:params productIds : list of productIds

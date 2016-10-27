@@ -21,6 +21,7 @@ class DataReader(object):
 	# return next_batch
 	# return (user_ids, prod_ids, ratings)
 	# (each are a list with length batch_size)
+	
 
     def get_next_test(self):
 	# return next batch

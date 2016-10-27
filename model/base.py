@@ -1,3 +1,9 @@
+"""
+Created on Thu Oct 27 2016
+
+@author: Sewon
+"""
+
 from model.reader import DataReader
 
 """
@@ -12,19 +18,19 @@ class BaseRecommender(object):
 	self.batch_size = batch_size
 	self.dataReader = DataReader(small, batch_size)
 
-    def build(): # This is an abstract method
+    def build(self): # This is an abstract method
 	"""
 	build recommender system
 	"""
 	return None
 
-    def eval():	# This is an abstract method
+    def eval(self):	# This is an abstract method
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""
 	return None
 	
-    def predict(userIds, productIds): # This is an abstract method
+    def predict(self, userIds, productIds): # This is an abstract method
 	"""
 	:param userIds : list of userIds
 	:params productIds : list of productIds
