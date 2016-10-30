@@ -58,7 +58,7 @@ class Evaluator(object):
 	build_time = (t2-t1)/60
 	eval_time = (t3-t2)/60
 	print ("Recommender [%s]\t: Error : %.4f (build %dmin eval %dmin)" \
-		%(error, build_time, eval_time))
+		%(config, error, build_time, eval_time))
 	self.recommenders[config] = recommenders
 
     def run_demo(self):
