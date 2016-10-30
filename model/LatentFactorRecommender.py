@@ -4,8 +4,7 @@ Created on Thu Oct 27 2016
 @author: Sewon
 """
 
-from model.reader import DataReader
-from model.base import BaseRecommender
+from model.BaseRecommender import BaseRecommender
 
 
 class LatentFactorRecommender(BaseRecommender):
@@ -63,7 +62,7 @@ class LatentFactorRecommender(BaseRecommender):
 
 	print ("Recommender is built!")
 
-    def eval(self):
+    def test(self):
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""

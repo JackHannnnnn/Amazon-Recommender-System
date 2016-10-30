@@ -4,9 +4,7 @@ Created on Thu Oct 27 2016
 @author: Sewon
 """
 
-
-from model.reader import DataReader
-from model.base import BaseRecommender
+from model.BaseRecommender import BaseRecommender
 
 
 import tensorflow as tf
@@ -16,12 +14,13 @@ from operator import itemgetter
 
 class LearnedRecommender(BaseRecommender):
 
-    def __init__(self, small, batch_size, epoch_num):
+    def __init__(self, small, batch_size):
 	BaseRecommender.__init__(self, small, batch_size)
 	self.user_num = self.reader.get_user_num()
 	self.prod_num = self.reader.get_prod_num()
-	self.batch_num = self.reader.get_batch_num()
-	self.epoch_num = epoch_num
+	self.batch_num_train = self.reader.get_batch_num_train()
+	self.batch_num_test = self.reader.get_batch_num_test()
+	self.epoch_num = 20
 
     def build(self):
 	"""
@@ -32,22 +31,24 @@ class LearnedRecommender(BaseRecommender):
 
 	self.W = tf.Variable(tf.random_uniform([self.prod_num, self.prod_num], -1.0, 1.0), name='W')
 	self.b_p = tf.Variable(tf.zeros([self.prod_num]), name='b_prod')
-	self.b = tf.Variable(0, name='b')
+	self.b = tf.Variable(0.0, name='b')
 
 	# Placeholders
 
-	self.x_bias = tf.placeholder('int', shape=[self.batch_size])
+	self.x_bias = tf.placeholder('float32', shape=[self.batch_size])
 	self.x_rate = tf.placeholder('float32', shape=[self.batch_size, self.prod_num])
-	self.x_mask = tf.placeholder('int', shape=[self.batch_size, self.prod_num])
+	self.x_mask = tf.placeholder('float32', shape=[self.batch_size, self.prod_num])
 	self.y_rate = tf.placeholder('float32', shape=[self.batch_size])
-	self.y_ind = tf.placholder('int', shape=[self.batch_size])
+	self.y_ind = tf.placeholder('int32', shape=[self.batch_size])
 
 	# models
 
 	b_x = self.x_bias
-	b = tf.reshape(tf.tile(self.b, self.batch_size*self.prod_num), [self.batch_size, self.prod_num])
-	b_j = tf.reshape(tf.tile(self.b_p, self.batch_size), [self.batch_size, self.prod_num])
-	r_xj = (x_rate - b - b_x - b_j) * self.x_mask # [self.batch_size, self.prod_num]
+	b_expand = tf.expand_dims(self.b, 0)
+	b_ = tf.tile(b_expand, [self.batch_size*self.prod_num])
+	b = tf.reshape(b_, [self.batch_size, self.prod_num])
+	b_j = tf.reshape(tf.tile(self.b_p, [self.batch_size]), [self.batch_size, self.prod_num])
+	r_xj = (self.x_rate - b - b_x - b_j) * self.x_mask # [self.batch_size, self.prod_num]
 	r_xi = b + b_j + b_x + tf.matmul(r_xj, W) # [self.batch_size, self.prod_num]
 	self.pred_y_rate = tf.gather(r_xi, self.y_ind) # [self.batch_size]
 
@@ -63,7 +64,7 @@ class LearnedRecommender(BaseRecommender):
 
 	for epoch in range(epoch_num):
 	    tot_loss = 0.0
-	    for i in range(self.batch_num):
+	    for i in range(self.batch_num_train):
 		user_ids, prod_ids, ratings = self.reader.get_next_batch_train()
 		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
 		tot_loss += loss
@@ -74,12 +75,12 @@ class LearnedRecommender(BaseRecommender):
 	print ("Recommender is built!")
 
 
-    def eval(self):
+    def test(self):
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""
 	tot_loss = 0.0
-	for i in range(self.batch_num):
+	for i in range(self.batch_num_test):
 	    user_ids, prod_ids, ratings = self.reader_get_next_batch_test()
 	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
 	    tot_loss += loss
@@ -136,7 +137,7 @@ class LearnedRecommender(BaseRecommender):
 	    start = i * self.batch_size
 	    end = (i+1) * self.batch_size
 	    curr_userIds, curr_productIds, curr_dummy_ratings, curr_user_avg, curr_prev_productIds, curr_prev_ratings = \
-		tuple([data[start:end] for data in [userIds, productIds, dummy_ratings, user_avg, prev_productIds, prev_ratings])
+		tuple([data[start:end] for data in [userIds, productIds, dummy_ratings, user_avg, prev_productIds, prev_ratings]])
 	    curr_pred_rating = sess.run(self.pred_rating, feed_dict = \
 		self.get_feed_dict(curr_userIds, curr_prodIds, curr_dummy_ratings, curr_user_avg, curr_prev_productIds, curr_prev_ratings))
 	    pred_ratings += list(curr_pred_rating)

@@ -4,7 +4,7 @@ Created on Thu Oct 27 2016
 @author: Sewon
 """
 
-from model.reader import DataReader
+from model.DataReader import DataReader
 
 """
 
@@ -16,7 +16,7 @@ class BaseRecommender(object):
     def __init__(self, small, batch_size):
 	self.small = small
 	self.batch_size = batch_size
-	self.dataReader = DataReader(small, batch_size)
+	self.reader = DataReader(small, batch_size)
 
     def build(self): # This is an abstract method
 	"""
@@ -24,7 +24,7 @@ class BaseRecommender(object):
 	"""
 	return None
 
-    def eval(self):	# This is an abstract method
+    def test(self):	# This is an abstract method
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""

@@ -1,5 +1,4 @@
-from model.reader import DataReader
-from model.base import BaseRecommender
+from model.BaseRecommender import BaseRecommender
 
 
 class CollaboFilterRecommender(BaseRecommender):
@@ -11,7 +10,7 @@ class CollaboFilterRecommender(BaseRecommender):
 	build recommender system
 	"""
 
-    def eval(self):
+    def test(self):
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""

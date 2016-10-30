@@ -1,16 +1,15 @@
-from model.reader import DataReader
-from model.base import BaseRecommender
+from model.BaseRecommender import BaseRecommender
 
 class ContentBasedRecommender(BaseRecommender):
     def __init__(self, small, batch_size):
-	BaseRecommender.__init__(self, small, batch)
+	BaseRecommender.__init__(self, small, batch_size)
 
     def build(self):
 	"""
 	build recommender system
 	"""
 
-    def eval(self):
+    def test(self):
 	"""
 	:return performance on test set (Mean Square Root Error)
 	"""

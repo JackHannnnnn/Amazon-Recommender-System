@@ -5,14 +5,14 @@ Created on Thu Oct 27 2016
 """
 
 import numpy as np
-import time, argparse
+import time
 
 # List of recommenders
-from model.cb import ContentBasedRecommender
-from model.cf import CollaboFilterRecommender
-from model.learned import LearnedRecommender
-from model.lf import LatentFactorRecommender
-from model.blf import BiasLatentFactorRecommender
+from model.ContentBasedRecommender import ContentBasedRecommender
+from model.CollaboFilterRecommender import CollaboFilterRecommender
+from model.LearnedRecommender import LearnedRecommender
+from model.LatentFactorRecommender import LatentFactorRecommender
+from model.BiasLatentFactorRecommender import BiasLatentFactorRecommender
 
 class Evaluator(object):
     def __init__(self, recom, hidden, small, batch_size):
@@ -43,7 +43,7 @@ class Evaluator(object):
 	    self.single_eval(config)
 
     def single_eval(self, config):
-	if type(config) == 'list':
+	if type(config) == list:
 	    recommender = self.recommender_dic[config[0]](self.small, self.batch_size, config[1])
 	    config = config[0]+"("+config[1]+")"
 	else:
@@ -53,7 +53,7 @@ class Evaluator(object):
 	recommender.build()
 	t2 = time.time()
 	print "Start Evaluating Performance"
-	error = recommender.eval()
+	error = recommender.test()
 	t3 = time.time()
 	build_time = (t2-t1)/60
 	eval_time = (t3-t2)/60
@@ -94,17 +94,4 @@ class Evaluator(object):
 	    print ("%s :")
 	    for prods in recommend_prods:
 		print prods
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--recom", nargs="+", type=str, help="the exponent", default='all')
-    parser.add_argument("--hidden", nargs="+", type=int, help="dimension of hidden", default=[100])
-    parser.add_argument("--small", type=bool, help="for small set?", default=True)
-    parser.add_argument("--batch_size", type=int, help="batch size", default=32)
-    parser.add_argument("--demo", type=bool, help="run demo?", default=False)
-    args = parser.parse_args()
-    evaluator = Evaluator(args.recom, args.hidden, args.small, args.batch_size)
-    evaluator.evaluate()
-    if args.demo:
-	evaluator.run_demo()
 

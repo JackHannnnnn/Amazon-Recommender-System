@@ -43,18 +43,35 @@ chmod +x download.sh; ./download.sh
 
 This will takes several minutes.
 
-2. Preprocess data (current step)
+2. Preprocess data and create DB
 ```bash
-python -m prepro.main
+python prepro/preprocess.py
 ```
 
-You can read code from prepro/main.
-'entry_list' is a list of each entry
+3. Run Recommender System
+```bash
+python -m model.main
+```
+It builds recommender with train data and also evaluates performance on test data. If you want to specift certain recommender system, you can use '--recom'.
 
-3. Create DB
+Content Based : 'cb'
+Collaborative Filtering : 'cf'
+Weight Learned : 'l'
+Latent Factor : 'lf'
+Latent Factor with Bias Extension : 'blf'
 
-4. Implementation of Recommender System
-
+For example, if you want to run Weight Learned Recommender,
+```bash
+python -m model.main --recom l
+```
+If you want to run Content Based and Collaborative Filtering,
+```bash
+python -m model.main --recom cb cf
+```
+It runs recommender in small dataset by default. If you want to run in large dataset, you can use '--small False'. Batch size is 32 by default. If you want to change it, you can use '--batch_size'. For example,
+```bash
+python -m model.main --small False --batch_size 128
+```
 
 ### References
 - M. Pazzani, D. Billsus, Content-based Recommendation System.
