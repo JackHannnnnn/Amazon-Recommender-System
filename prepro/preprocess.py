@@ -103,44 +103,39 @@ indexNoSmallTest = indexNoSmall[:int((len(indexNoSmall)*0.1))]
 indexTest = np.array(list(indexYesSmallTest) + list(indexNoSmallTest))
 filteredReviewsBig['whetherTest'] = 0
 filteredReviewsBig['whetherTest'][filteredReviewsBig.index.isin(indexTest)] = 1
-filteredReviewsBig.to_csv('final_review_data.csv', index=False)
 
 userTable = filteredReviewsBig[['userID', 'score']].groupby('userID').mean()
 userTable = userTable.rename(columns={'score': 'avgScore'})
-userTable.to_csv('user_data.csv')
+userTable['uid'] = np.arange(userTable.shape[0])
+userTable.to_csv('user_data.csv', index=False, header=False)
 
 productTable = filteredReviewsBig[['productID', 'score']].groupby('productID').mean()
 productTable = productTable.rename(columns={'score': 'avgScore'})
-productTable.to_csv('product_data.csv')
+productTable['pid'] = np.arange(productTable.shape[0])
+productTable.to_csv('product_data.csv', index=False, header=False)
+
+filteredReviewsBig = pd.merge(filteredReviewsBig, productTable[['productID', 'pid']], on='productID', how='left')
+filteredReviewsBig = pd.merge(filteredReviewsBig, userTable[['userID', 'uid']], on='userID', how='left')
+del filteredReviewsBig['productID'], filteredReviewsBig['userID']
+reviewTable = filteredReviewsBig
+reviewTable['whetherSmall'] = reviewTable['whetherSmall'].apply(lambda x: int(x))
+reviewTable = reviewTable.sort_values(['whetherTest', 'whetherSmall'], ascending=[True, False])
+reviewTable['batchID'] = 0
+reviewTable['batchID'][reviewTable['whetherTest'] == 0] = np.arange(np.sum(reviewTable['whetherTest'] == 0))
+reviewTable['batchID'][reviewTable['whetherTest'] == 1] = np.arange(np.sum(reviewTable['whetherTest'] == 1))
+reviewTable['rid'] = np.arange(reviewTable.shape[0])
+reviewTable = reviewTable[['rid', 'pid', 'uid', 'score', 'reviewTime', 'whetherTest', 'whetherSmall', 'batchID']]
+reviewTable.to_csv('final_review_data.csv', index=False, header=False)
+
+
 
 connection = MyriaConnection(rest_url='http://demo.myria.cs.washington.edu:8753')
 
-# Initialize a name and schema for the new relation
-name_user = {'userName': 'public',
-             'programName': 'CSE544_SM_CH',
-             'relationName': 'user'} 
-schema_user = { "columnNames" : ["userID", 'avgScore'],
-                "columnTypes" : ["STRING_TYPE", "STRING_TYPE"] }
-
-# Now upload that file to Myria
-with open('user_data.csv') as f:
-    connection.upload_fp(name_user, schema_user, f)
-    
-name_product = {'userName': 'public',
-                'programName': 'CSE544_SM_CH',
-                'relationName': 'product'} 
-schema_product = { "columnNames" : ["productID", 'avgScore'],
-                   "columnTypes" : ["STRING_TYPE", "STRING_TYPE"] }
-
-# Now upload that file to Myria
-with open('product_data.csv') as f:
-    connection.upload_fp(name_product, schema_product, f)
-    
 name_review = {'userName': 'public',
-                'programName': 'CSE544_SM_CH',
-                'relationName': 'review'} 
-schema_review = { "columnNames" : ["productID", 'reviewTime', 'score', 'userID', 'whetherSmall', 'whetherTest'],
-                  "columnTypes" : ["STRING_TYPE", "STRING_TYPE", "STRING_TYPE", "STRING_TYPE", "STRING_TYPE", "STRING_TYPE"] }
+               'programName': 'CSE544_SM_CH',
+               'relationName': 'ReviewTable'} 
+schema_review = {"columnNames": ['rid', 'pid', 'uid', 'score', 'reviewTime', 'whetherTest', 'whetherSmall', 'batchID'],
+                 "columnTypes": ['LONG_TYPE', 'LONG_TYPE', 'LONG_TYPE', 'FLOAT_TYPE', 'STRING_TYPE', 'INT_TYPE', 'INT_TYPE', 'LONG_TYPE']}
 
 # Now upload that file to Myria
 with open('final_review_data.csv') as f:
