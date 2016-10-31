@@ -66,7 +66,7 @@ class DataReader(object):
                         emit COUNT(*) as total];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return np.floor(query.to_dict()[0]['total'] / float(self.batch_size))
+        return int(query.to_dict()[0]['total'] / float(self.batch_size))
     
     def get_batch_num_test(self):
         # retun the total number of batches in the test set
@@ -86,7 +86,7 @@ class DataReader(object):
                         emit COUNT(*) as total];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return np.floor(query.to_dict()[0]['total'] / float(self.batch_size))
+        return int(query.to_dict()[0]['total'] / float(self.batch_size))
 
     def get_next_train(self):
         # return next_batch
@@ -111,7 +111,7 @@ class DataReader(object):
         self.ith_train_batch += 1
         train_data = pd.DataFrame(query.to_dict())[['uid', 'pid', 'score']]
         print 'Get %d rows of data' % train_data.shape[0]
-        return train_data
+	return train_data
 
     def get_next_test(self):
         # return next_batch

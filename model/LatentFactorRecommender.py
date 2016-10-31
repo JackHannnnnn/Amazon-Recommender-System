@@ -54,8 +54,7 @@ class LatentFactorRecommender(BaseRecommender):
 	for epoch in range(epoch_num):
 	    tot_loss = 0.0
 	    for i in range(self.batch_num):
-		user_ids, prod_ids, ratings = self.reader.get_next_batch_train()
-		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
+		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(self.reader.get_next_train()))
 		tot_loss += loss
 	    avg_loss = tot_loss / self.batch_num
 	    print ("Epoch %d : Loss : %.2f" % (epoch, avg_loss))
@@ -68,13 +67,15 @@ class LatentFactorRecommender(BaseRecommender):
 	"""
 	tot_loss = 0.0
 	for i in range(self.bach_num):
-	    user_ids, prod_ids, ratings = self.reader_get_next_batch_test()
-	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(user_ids, prod_ids, ratings))
+	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(self.reader.get_next_test()))
 	    tot_loss += loss
 	return tot_loss / self.batch_num
 
     def get_feed_dict(self, user_ids, prod_ids, ratings):
-	
+	user_ids = list(batch['uid'])
+	prod_ids = list(batch['pid'])
+	ratings = list(batch['score'])
+
 	yr = np.zeros((self.batch_size, self.prod_num))
 	ym = np.zeros((self.batch_size, self.prod_num))
 

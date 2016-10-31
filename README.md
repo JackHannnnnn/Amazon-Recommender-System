@@ -68,9 +68,9 @@ If you want to run Content Based and Collaborative Filtering,
 ```bash
 python -m model.main --recom cb cf
 ```
-It runs recommender in small dataset by default. If you want to run in large dataset, you can use '--small False'. Batch size is 32 by default. If you want to change it, you can use '--batch_size'. For example,
+It runs recommender in small dataset by default. If you want to run in large dataset, you can use '--small False'. Batch size is 128 by default. If you want to change it, you can use '--batch_size'. For example,
 ```bash
-python -m model.main --small False --batch_size 128
+python -m model.main --small False --batch_size 256
 ```
 
 ### References
