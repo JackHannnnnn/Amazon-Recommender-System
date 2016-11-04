@@ -11,18 +11,18 @@ class DataReader(object):
         self.ith_test_batch = 0
         
     def get_user_num(self):
-        # retun the number of unique users 
+        # int: return the number of unique users 
         if self.small == 1:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review 
-                        where whetherSmall == %d
+                        where whetherSmall = %d
                         emit uid];
                    store(q, data);""" % self.small
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review
                         emit uid];
                    store(q, data);"""
@@ -30,18 +30,18 @@ class DataReader(object):
         return len(pd.DataFrame(query.to_dict())['uid'].unique())
     
     def get_prod_num(self):
-        # return the number of unique products
+        # int: return the number of unique products
         if self.small == 1:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review 
-                        where whetherSmall == %d
+                        where whetherSmall = %d
                         emit pid];
                    store(q, data);""" % self.small
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:Review);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review
                         emit pid];
                    store(q, data);"""
@@ -49,195 +49,205 @@ class DataReader(object):
         return len(pd.DataFrame(query.to_dict())['pid'].unique())
     
     def get_batch_num_train(self):
-        # retun the total number of batches in the training set
+        # int: retun the total number of batches in the training set
         if self.small == 1:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review 
-                        where whetherSmall == %d and whetherTest == 0
+                        where whetherSmall = %d and whetherTest = 0
                         emit COUNT(*) as total];
                    store(q, data);""" % self.small
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review
-                        where whetherTest == 0
+                        where whetherTest = 0
                         emit COUNT(*) as total];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return int(query.to_dict()[0]['total'] / float(self.batch_size))
+        return int(np.floor(query.to_dict()[0]['total'] / float(self.batch_size)))
     
     def get_batch_num_test(self):
-        # retun the total number of batches in the test set
+        # int: retun the total number of batches in the test set
         if self.small == 1:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review 
-                        where whetherSmall == %d and whetherTest == 1
+                        where whetherSmall = %d and whetherTest = 1
                         emit COUNT(*) as total];
                    store(q, data);""" % self.small
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                   review = scan(public:CSE544_SM_CH:ReviewTable);
+                   review = scan(public:CSE544_SM_CH:ReviewData);
                    q = [from review
-                        where whetherTest == 1
+                        where whetherTest = 1
                         emit COUNT(*) as total];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return int(query.to_dict()[0]['total'] / float(self.batch_size))
+        return int(np.floor(query.to_dict()[0]['total'] / float(self.batch_size)))
 
     def get_next_train(self):
-        # return next_batch
-        # return (user_ids, prod_ids, ratings)
-        # (each are a list with length batch_size)
+        '''
+        return the training set of review data of the next batch
+        return a list of lists whose schema is ['uid', 'pid', 'score'] (format: [float, float, float])
+        the dimension of this list of lists is batch_size * 3
+        '''
         if self.small == 1:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where batchID >= %d and batchID < %d and whetherSmall == %d and whetherTest == 0
+                            where batchID >= %d and batchID < %d and whetherSmall = %d and whetherTest = 0
                             emit uid, pid, score];
                        store(q, data);""" % (self.ith_train_batch*self.batch_size, (self.ith_train_batch+1)*self.batch_size, self.small)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where batchID >= %d and batchID < %d and whetherTest == 0
+                            where batchID >= %d and batchID < %d and whetherTest = 0
                             emit uid, pid, score];
                        store(q, data);""" % (self.ith_train_batch*self.batch_size, (self.ith_train_batch+1)*self.batch_size)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         self.ith_train_batch += 1
-        train_data = pd.DataFrame(query.to_dict())[['uid', 'pid', 'score']]
+        train_data = query.to_dataframe()[['uid', 'pid', 'score']]
         print 'Get %d rows of data' % train_data.shape[0]
-	return train_data
+        return train_data.values.tolist()
 
     def get_next_test(self):
-        # return next_batch
-        # return (user_ids, prod_ids, ratings)
-        # (each are a list with length batch_size)
+        '''
+        return the training set of review data of the next batch
+        return a list of lists whose schema is ['uid', 'pid', 'score'] (format: [float, float, float])
+        the dimension of this list of lists is batch_size * 3
+        '''
         if self.small == 1:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where batchID >= %d and batchID < %d and whetherSmall == %d and whetherTest == 1
+                            where batchID >= %d and batchID < %d and whetherSmall = %d and whetherTest = 1
                             emit uid, pid, score];
                        store(q, data);""" % (self.ith_test_batch*self.batch_size, (self.ith_test_batch+1)*self.batch_size, self.small)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where batchID >= %d and batchID < %d and whetherTest == 1
+                            where batchID >= %d and batchID < %d and whetherTest = 1
                             emit uid, pid, score];
                        store(q, data);""" % (self.ith_test_batch*self.batch_size, (self.ith_test_batch+1)*self.batch_size)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         self.ith_test_batch += 1
-        test_data = pd.DataFrame(query.to_dict())[['uid', 'pid', 'score']]
+        test_data = query.to_dataframe()[['uid', 'pid', 'score']]
         print 'Get %d rows of data' % test_data.shape[0]
-        return test_data
+        return test_data.values.tolist()
     
     def get_avg_rating(self):
-        # return the the average rating of all reviews on the training set
+        # float: return the the average rating of all reviews on the training set
         if self.small == 1:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where whetherSmall == %d and whetherTest == 0
+                            where whetherSmall = %d and whetherTest = 0
                             emit AVG(score) as avgScore];
                        store(q, data);""" % self.small
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         else:
             queryStr = """
-                       review = scan(public:CSE544_SM_CH:ReviewTable);
+                       review = scan(public:CSE544_SM_CH:ReviewData);
                        q = [from review 
-                            where whetherTest == 0
+                            where whetherTest = 0
                             emit AVG(score) as avgScore];
                        store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         return query.to_dict()[0]['avgScore']
 
     def get_user_avg_rating(self, uids):
-        # return a list of avg_ratings for the list of users
-        avg_rating = []
+        '''
+        input: a list of integers
+        output: a list of floats: return a list of avg_ratings for the list of users
+        '''
         if self.small == 1:
-            for uid in uids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where whetherSmall == %d and uid == %d and whetherTest == 0
-                                emit AVG(score) as avgScore];
-                           store(q, data);""" % (self.small, uid)
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                avg_rating.append(query.to_dict()[0]['avgScore'])
+            queryStr = """
+                           uAvgScore = scan(public:CSE544_SM_CH:uAvgScore);
+                           q = [from uAvgScore
+                                emit uid, avgScoreTrainSmall];
+                           store(q, data);"""
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            query = query.to_dataframe()
+            u_data = dict(zip(query['uid'], query['avgScoreTrainSmall']))
         else:
-            for uid in uids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where uid == %d and whetherTest == 0
-                                emit AVG(score) as avgScore];
-                           store(q, data);""" % uid
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                avg_rating.append(query.to_dict()[0]['avgScore'])
-        return avg_rating
+            queryStr = """
+                           uAvgScore = scan(public:CSE544_SM_CH:uAvgScore);
+                           q = [from uAvgScore
+                                emit uid, avgScoreTrain];
+                           store(q, data);"""
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            query = query.to_dataframe()
+            u_data = dict(zip(query['uid'], query['avgScoreTrain']))
+        return [u_data[uid] for uid in uids]
         
         
     def get_prod_avg_rating(self, pids):
-        # return a list of avg_ratings for the list of products
-        avg_rating = []
+        '''
+        input: a list of integers
+        output: a list of floats: return a list of avg_ratings for the list of products
+        '''
         if self.small == 1:
-            for pid in pids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where whetherSmall == %d and pid == %d and whetherTest == 0
-                                emit AVG(score) as avgScore];
-                           store(q, data);""" % (self.small, pid)
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                avg_rating.append(query.to_dict()[0]['avgScore'])
+            queryStr = """
+                           pAvgScore = scan(public:CSE544_SM_CH:pAvgScore);
+                           q = [from pAvgScore
+                                emit pid, avgScoreTrainSmall];
+                           store(q, data);"""
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            query = query.to_dataframe()
+            p_data = dict(zip(query['pid'], query['avgScoreTrainSmall']))
         else:
-            for pid in pids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where pid == %d and whetherTest == 0
-                                emit AVG(score) as avgScore];
-                           store(q, data);""" % pid
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                avg_rating.append(query.to_dict()[0]['avgScore'])
-        return avg_rating
+            queryStr = """
+                           pAvgScore = scan(public:CSE544_SM_CH:pAvgScore);
+                           q = [from pAvgScore
+                                emit pid, avgScoreTrain];
+                           store(q, data);"""
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            query = query.to_dataframe()
+            p_data = dict(zip(query['pid'], query['avgScoreTrain']))
+        return [p_data[pid] for pid in pids]
 
     def get_user_rating(self, uids):
-        # param user_ids : list of user_ids
-        # return a tuple (prod_ids, ratings)
-        # which are Each user's previously used products and their ratings (their length should be same)
-        prod_list = []
-        rating_list = []
+        '''
+        input: a list of integers (user_id)
+        output: return a tuple (prod_ids, ratings)
+        which are Each user's previously used products and their ratings (their length should be same)
+        '''
         if self.small == 1:
-            for uid in uids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where whetherSmall == %d and uid == %d and whetherTest == 0
-                                emit pid, score];
-                           store(q, data);""" % (self.small, uid)
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                data = pd.DataFrame(query.to_dict())
-                prod_list.append(list(data['pid']))
-                rating_list.append(list(data['score']))
+            queryStr = """
+                           review = scan(public:CSE544_SM_CH:ReviewData);
+                           q = [from review
+                                where whetherSmall = %d and whetherTest = 0
+                                emit uid, pid, score];
+                           store(q, data);""" % self.small
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            data = query.to_dataframe()
+            prod_dict = {}
+            rating_dict = {}
+            data = data[data['uid'].isin(uids)]
+            for name, group in data.groupby('uid'):
+                prod_dict[name] = list(group['pid'])
+                rating_dict[name] = list(group['score'])
         else:
-            for uid in uids:
-                queryStr = """
-                           review = scan(public:CSE544_SM_CH:ReviewTable);
-                           q = [from review 
-                                where uid == %d and whetherTest == 0
-                                emit pid, score];
-                           store(q, data);""" % uid
-                query = MyriaQuery.submit(queryStr, connection=self.connection)
-                data = pd.DataFrame(query.to_dict())
-                prod_list.append(list(data['pid']))
-                rating_list.append(list(data['score']))
-        return (prod_list, rating_list)
+            queryStr = """
+                           review = scan(public:CSE544_SM_CH:ReviewData);
+                           q = [from review
+                                where whetherTest = 0
+                                emit uid, pid, score];
+                           store(q, data);"""
+            query = MyriaQuery.submit(queryStr, connection=self.connection)
+            data = query.to_dataframe()
+            prod_dict = {}
+            rating_dict = {}
+            data = data[data['uid'].isin(uids)]
+            for name, group in data.groupby('uid'):
+                prod_dict[name] = list(group['pid'])
+                rating_dict[name] = list(group['score'])
+        return ([prod_dict[uid] for uid in uids], [rating_dict[uid] for uid in uids])
         
