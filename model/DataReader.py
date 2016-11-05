@@ -9,9 +9,17 @@ class DataReader(object):
         self.connection = MyriaConnection(rest_url='http://demo.myria.cs.washington.edu:8753')
         self.ith_train_batch = 0
         self.ith_test_batch = 0
+
+	self.user_num = None
+	self.prod_num = None
+	self.batch_num_train = None
+	self.batch_num_test = None
         
     def get_user_num(self):
         # int: return the number of unique users 
+	if self.user_num is not None:
+	    return self.user_num
+
         if self.small == 1:
             queryStr = """
                    review = scan(public:CSE544_SM_CH:ReviewData);
@@ -27,10 +35,14 @@ class DataReader(object):
                         emit uid];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return len(pd.DataFrame(query.to_dict())['uid'].unique())
-    
+        self.user_num = len(pd.DataFrame(query.to_dict())['uid'].unique())
+	return self.user_num    
+
     def get_prod_num(self):
         # int: return the number of unique products
+	if self.prod_num is not None:
+	    return self.prod_num
+
         if self.small == 1:
             queryStr = """
                    review = scan(public:CSE544_SM_CH:ReviewData);
@@ -46,10 +58,14 @@ class DataReader(object):
                         emit pid];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return len(pd.DataFrame(query.to_dict())['pid'].unique())
-    
+        self.prod_num = len(pd.DataFrame(query.to_dict())['pid'].unique())
+    	return self.prod_num
+
     def get_batch_num_train(self):
         # int: retun the total number of batches in the training set
+	if self.batch_num_train is not None:
+	    return self.batch_num_train
+
         if self.small == 1:
             queryStr = """
                    review = scan(public:CSE544_SM_CH:ReviewData);
@@ -66,10 +82,14 @@ class DataReader(object):
                         emit COUNT(*) as total];
                    store(q, data);"""
             query = MyriaQuery.submit(queryStr, connection=self.connection)
-        return int(np.floor(query.to_dict()[0]['total'] / float(self.batch_size)))
-    
+        self.batch_num_train = int(np.floor(query.to_dict()[0]['total'] / float(self.batch_size)))
+	return self.batch_num_train    
+
     def get_batch_num_test(self):
         # int: retun the total number of batches in the test set
+	if self.batch_num_test is not None:
+	    return self.batch_num_test
+
         if self.small == 1:
             queryStr = """
                    review = scan(public:CSE544_SM_CH:ReviewData);
@@ -94,6 +114,9 @@ class DataReader(object):
         return a list of lists whose schema is ['uid', 'pid', 'score'] (format: [float, float, float])
         the dimension of this list of lists is batch_size * 3
         '''
+	if self.ith_train_batch == 0:
+	    print ("This is the first batch of train")
+
         if self.small == 1:
             queryStr = """
                        review = scan(public:CSE544_SM_CH:ReviewData);
@@ -111,8 +134,10 @@ class DataReader(object):
                        store(q, data);""" % (self.ith_train_batch*self.batch_size, (self.ith_train_batch+1)*self.batch_size)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         self.ith_train_batch += 1
+	if(self.ith_train_batch == self.batch_num_train):
+	    self.ith_train_batch = 0
         train_data = query.to_dataframe()[['uid', 'pid', 'score']]
-        print 'Get %d rows of data' % train_data.shape[0]
+        #print 'Get %d rows of data' % train_data.shape[0]
         return train_data.values.tolist()
 
     def get_next_test(self):
@@ -121,6 +146,9 @@ class DataReader(object):
         return a list of lists whose schema is ['uid', 'pid', 'score'] (format: [float, float, float])
         the dimension of this list of lists is batch_size * 3
         '''
+	if self.ith_test_batch == 0:
+	    print ("This is the first batch of test")
+
         if self.small == 1:
             queryStr = """
                        review = scan(public:CSE544_SM_CH:ReviewData);
@@ -138,8 +166,10 @@ class DataReader(object):
                        store(q, data);""" % (self.ith_test_batch*self.batch_size, (self.ith_test_batch+1)*self.batch_size)
             query = MyriaQuery.submit(queryStr, connection=self.connection)
         self.ith_test_batch += 1
+	if self.ith_test_batch == self.batch_num_test:
+	    self.ith_test_batch = self.batch_num_test
         test_data = query.to_dataframe()[['uid', 'pid', 'score']]
-        print 'Get %d rows of data' % test_data.shape[0]
+        #print 'Get %d rows of data' % test_data.shape[0]
         return test_data.values.tolist()
     
     def get_avg_rating(self):

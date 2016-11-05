@@ -45,7 +45,7 @@ class Evaluator(object):
     def single_eval(self, config):
 	if type(config) == list:
 	    recommender = self.recommender_dic[config[0]](self.small, self.batch_size, config[1])
-	    config = config[0]+"("+config[1]+")"
+	    config = config[0]+"("+str(config[1])+" factors)"
 	else:
 	    recommender = self.recommender_dic[config](self.small, self.batch_size)
 	print "Start Building Recommender System [%s]" %(config)
@@ -59,7 +59,7 @@ class Evaluator(object):
 	eval_time = (t3-t2)/60
 	print ("Recommender [%s]\t: Error : %.4f (build %dmin eval %dmin)" \
 		%(config, error, build_time, eval_time))
-	self.recommenders[config] = recommenders
+	self.recommenders[config] = recommender
 
     def run_demo(self):
 	print ("Which recommender systems do you want?")

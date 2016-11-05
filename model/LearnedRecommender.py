@@ -21,12 +21,11 @@ class LearnedRecommender(BaseRecommender):
 	self.prod_num = self.reader.get_prod_num()
 	self.batch_num_train = self.reader.get_batch_num_train()
 	self.batch_num_test = self.reader.get_batch_num_test()
-	self.epoch_num = 20
+	self.epoch_num = 1 #50
 	print "Number of Users : %d\tNumber of Prods : %d" \
 		% (self.user_num, self.prod_num)
 	print "Number of train batches : %d\tNumber of test batches : %d" \
 		% (self.batch_num_train, self.batch_num_test)
-	self.tmp = {}
 
     def build(self):
 	"""
@@ -77,7 +76,7 @@ class LearnedRecommender(BaseRecommender):
 		tot_loss += loss
 		print "loss : %.2f" %(loss)
 
-	    avg_loss = tot_loss / self.batch_num
+	    avg_loss = tot_loss / self.batch_num_train
 	    print ("Epoch %d\tLoss\t%.2f\tTime %dmin" \
 		% (epoch, avg_loss, (time.time()-t)/60))
 
@@ -90,11 +89,17 @@ class LearnedRecommender(BaseRecommender):
 	"""
 	tot_loss = 0.0
 	for i in range(self.batch_num_test):
-	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(self.reader_get_next_test()))
+	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(self.reader.get_next_test()))
 	    tot_loss += loss
-	return tot_loss / self.batch_num
+	return tot_loss / self.batch_num_test
 
     def get_feed_dict(self, batch, user_avg = None, prev_prods = None, prev_rates = None):
+
+	user_ids = [l[0] for l in batch]
+	prod_ids = [int(l[1]) for l in batch]
+	ratings = [l[2] for l in batch]
+
+	"""
 	user_ids = list(batch['uid'])
 	prod_ids = list(batch['pid'])
 	ratings = list(batch['score'])
@@ -107,11 +112,11 @@ class LearnedRecommender(BaseRecommender):
 		l.append(self.tmp[prod])
 	    return l
 	prod_ids = manage(prod_ids)
+	"""
 
 	if user_avg is None or prev_prods is None or prev_rates is None:
 	    prev_prods, prev_rates = self.reader.get_user_rating(user_ids)
 	    user_avg = self.reader.get_user_avg_rating(user_ids)
-	prev_prods = [manage(prev_prod) for prev_prod in prev_prods]	
 
 	xr = np.zeros([self.batch_size, self.prod_num])
 	xm = np.zeros([self.batch_size, self.prod_num])

@@ -6,16 +6,26 @@ Created on Thu Oct 27 2016
 
 from model.BaseRecommender import BaseRecommender
 
+import numpy as np
+import tensorflow as tf
+import time
 
 class LatentFactorRecommender(BaseRecommender):
     def __init__(self, small, batch_size, factor_num):
 	BaseRecommender.__init__(self, small, batch_size)
 	self.user_num = self.reader.get_user_num()
 	self.prod_num = self.reader.get_prod_num()
-	self.batch_num = self.reader.get_batch_num()
+	self.batch_num_train = self.reader.get_batch_num_train()
+	self.batch_num_test = self.reader.get_batch_num_test()
 	self.factor_num = factor_num
+	self.user_dic = {}
 
-
+	self.epoch_num = 3 #50
+	print "Number of Users : %d\tNumber of Prods : %d" \
+		% (self.user_num, self.prod_num)
+	print "Number of train batches : %d\tNumber of test batches : %d" \
+		% (self.batch_num_train, self.batch_num_test)
+	
     def build(self):
 	"""
 	build recommender system
@@ -29,35 +39,40 @@ class LatentFactorRecommender(BaseRecommender):
 	# Placeholders
 
 	
-	self.u_ind = tf.placeholder('int', shape=[self.batch_size])
+	self.u_ind = tf.placeholder('int32', shape=[self.batch_size])
 	self.y_rate = tf.placeholder('float32', shape=[self.batch_size, self.prod_num])
-	self.y_mask = tf.placeholder('int', shape=[self.batch_size, self.prod_num])
+	self.y_mask = tf.placeholder('float32', shape=[self.batch_size, self.prod_num])
 
 	# models
 
-	for i in range(self.batc_size):
-	    currU = tf.gather(Wu, i)
+	for i in range(self.batch_size):
+	    ind = tf.gather(self.u_ind, i)
+	    currU = tf.gather(self.Wu, ind)
 	    if i==0: U=currU
 	    else: U=tf.concat(0, [U, currU])
 	# U : [batch_size, factor_num]
 	# Wp : [prod_num, factor_num]
-	self.prod_y_rate = tf.matmul(U, tf.transpose(Wp))
+	self.pred_y_rate = tf.matmul(tf.reshape(U, [self.batch_size, self.factor_num]), tf.transpose(self.Wp))
 	loss_m = tf.sqrt(tf.squared_difference(self.y_rate, self.pred_y_rate))
 	self.loss = tf.reduce_sum(loss_m * self.y_mask)/self.batch_size
 	optimizer = tf.train.AdamOptimizer(0.01)
-	train_op = optimizer.minimize(loss)
+	train_op = optimizer.minimize(self.loss)
 
 	#training
 	self.sess = tf.Session()
 	self.sess.run(tf.initialize_all_variables())
 
-	for epoch in range(epoch_num):
+	for epoch in range(self.epoch_num):
+	    t = time.time()
 	    tot_loss = 0.0
-	    for i in range(self.batch_num):
+	    for i in range(self.batch_num_train):
 		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(self.reader.get_next_train()))
 		tot_loss += loss
-	    avg_loss = tot_loss / self.batch_num
-	    print ("Epoch %d : Loss : %.2f" % (epoch, avg_loss))
+		print (loss)
+	    avg_loss = tot_loss / self.batch_num_train
+	    print ("Epoch %d\tLoss\t%.2f\tTime %dmin" \
+		% (epoch, avg_loss, (time.time()-t)/60))
+
 
 	print ("Recommender is built!")
 
@@ -66,15 +81,24 @@ class LatentFactorRecommender(BaseRecommender):
 	:return performance on test set (Mean Square Root Error)
 	"""
 	tot_loss = 0.0
-	for i in range(self.bach_num):
+	for i in range(self.batch_num_test):
 	    loss = self.sess.run(self.loss, feed_dict = self.get_feed_dict(self.reader.get_next_test()))
 	    tot_loss += loss
-	return tot_loss / self.batch_num
+	return tot_loss / self.batch_num_test
 
-    def get_feed_dict(self, user_ids, prod_ids, ratings):
-	user_ids = list(batch['uid'])
-	prod_ids = list(batch['pid'])
-	ratings = list(batch['score'])
+    def get_feed_dict(self, batch):
+	user_ids = [l[0] for l in batch]
+	prod_ids = [int(l[1]) for l in batch]
+	ratings = [l[2] for l in batch]
+
+	def manage(users):
+	    l = []
+	    for user in users:
+		if not user in self.user_dic:
+		    self.user_dic[user] = len(self.user_dic)
+		l.append(self.user_dic[user])
+	    return l
+	user_ids = manage(user_ids)
 
 	yr = np.zeros((self.batch_size, self.prod_num))
 	ym = np.zeros((self.batch_size, self.prod_num))
@@ -119,7 +143,7 @@ class LatentFactorRecommender(BaseRecommender):
 		yr[i][prodId] = rating
 		ym[i][prodId] = 1
 	feed_dict = {y_rate : yr, y_mask : ym}
-	for epoch in range(20):
+	for epoch in range(self.epoch_num):
 	    _, loss = self.sess.run([train_op, loss_op], feed_dict = feed_dict)
 	    print ("epoch %d loss %.3f" %(epoch, loss))
 	tot_y_rate = self.sess.run(pred_y_rate, feed_dict = feed_dict)
