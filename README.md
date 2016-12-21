@@ -76,5 +76,4 @@ python -m model.main --small False --batch_size 256
 ### References
 - M. Pazzani, D. Billsus, Content-based Recommendation System.
 - G. Adomavicius and A. Tuzhilin, “Towards the next generation of recommender systems: a survey of the state-of-the-art and possible extensions,” IEEE Trans. on Data and Knowledge Engineering 17:6, pp. 734– 749, 2005.
-- Y Koren, R Bell, C Volinsky.  Matrix factorization techniques for recommender systems. Computer, 2009.
-- M Jahrer, A Töscher, R Legenstein. Combining predictions for accurate recommender systems. Proceedings of the 16th ACM. 
+ 
