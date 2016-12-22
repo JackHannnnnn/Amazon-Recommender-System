@@ -1,4 +1,16 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct 25 19:28:55 2016
+
+@author: Chaofan
+"""
+
 from model.BaseRecommender import BaseRecommender
+import numpy as np
+import pandas as pd
+import datetime
+
 
 class ContentBasedRecommender(BaseRecommender):
     def __init__(self, small, batch_size):
