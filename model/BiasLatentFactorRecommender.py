@@ -11,7 +11,7 @@ import tensorflow as tf
 import time
 
 class BiasLatentFactorRecommender(BaseRecommender):
-    def __init__(self, small, batch_size, factor_num):
+    def __init__(self, small, batch_size, factor_num, wd = 0.00005):
 	BaseRecommender.__init__(self, small, batch_size)
 	self.user_num = self.reader.get_user_num()
 	self.prod_num = self.reader.get_prod_num()
@@ -20,7 +20,9 @@ class BiasLatentFactorRecommender(BaseRecommender):
 	self.factor_num = factor_num
 	self.user_dic = {}
 
-	self.epoch_num = 3 #50
+	self.epoch_num = 20
+	self.lr = 0.1
+	self.wd = 0.001
 	print "Number of Users : %d\tNumber of Prods : %d" \
 		% (self.user_num, self.prod_num)
 	print "Number of train batches : %d\tNumber of test batches : %d" \
@@ -72,10 +74,12 @@ class BiasLatentFactorRecommender(BaseRecommender):
 	bias = tf.reshape(tf.tile(b_expand, [self.batch_size*self.prod_num]), [self.batch_size, self.prod_num])
 	
 	self.pred_y_rate = tf.matmul(Umat, Pmat) + biasU + biasP + bias
-	loss_m = tf.sqrt(tf.squared_difference(self.y_rate, self.pred_y_rate))
-	self.loss = tf.reduce_sum(loss_m * self.y_mask)/self.batch_size
-	optimizer = tf.train.AdamOptimizer(0.01)
-	train_op = optimizer.minimize(self.loss)
+	_loss = tf.sqrt(tf.squared_difference(self.y_rate, self.pred_y_rate))
+	self.l2_loss = tf.nn.l2_loss(self.Wp) + tf.nn.l2_loss(self.Wu) + tf.nn.l2_loss(self.bu) + tf.nn.l2_loss(self.bp) + tf.nn.l2_loss(self.b)
+	self.loss = tf.reduce_sum(_loss * self.y_mask)/self.batch_size
+	self.tot_loss = self.loss + self.wd * self.l2_loss
+	optimizer = tf.train.RMSPropOptimizer(self.lr)
+	train_op = optimizer.minimize(self.tot_loss)
 
 	#training
 	self.sess = tf.Session()
@@ -87,10 +91,10 @@ class BiasLatentFactorRecommender(BaseRecommender):
 	    for i in range(self.batch_num_train):
 		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(self.reader.get_next_train()))
 		tot_loss += loss
-		print (loss)
+		#print (loss)
 	    avg_loss = tot_loss / self.batch_num_train
-	    print ("Epoch %d\tLoss\t%.2f\tTime %dmin" \
-		% (epoch, avg_loss, (time.time()-t)/60))
+	    print ("Epoch %d\tLoss \t%.4f\tTest-Loss \t%.4f\tTime %dmin" \
+		% (epoch, avg_loss, self.test(), (time.time()-t)/60))
 
 
 	print ("Recommender is built!")
