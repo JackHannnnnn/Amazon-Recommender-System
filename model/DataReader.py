@@ -1,3 +1,11 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct 18 20:28:07 2016
+
+@author: Chaofan
+"""
+
 import pandas as pd
 import numpy as np
 import MySQLdb as mdb
@@ -8,17 +16,15 @@ class DataReader(object):
         self.batch_size = batch_size
         self.ith_train_batch = 0
         self.ith_test_batch = 0
-        
         self.con = mdb.connect('localhost', 'testuser', 'test623', 'testdb')
         self.cur = self.con.cursor()
-
         self.user_num = None
         self.prod_num = None
         self.batch_num_train = None
         self.batch_num_test = None
         
     def get_user_num(self):
-        # int: return the number of unique users 
+        ''' int: return the number of unique users'''
         if self.user_num is not None:
             return self.user_num
         
@@ -31,7 +37,7 @@ class DataReader(object):
         return self.user_num
 
     def get_prod_num(self):
-        # int: return the number of unique products
+        ''' int: return the number of unique products'''
         if self.prod_num is not None:
             return self.prod_num
         
@@ -44,7 +50,7 @@ class DataReader(object):
         return self.prod_num
 
     def get_batch_num_train(self):
-        # int: retun the total number of batches in the training set
+        ''' int: retun the total number of batches in the training set'''
         if self.batch_num_train is not None:
             return self.batch_num_train
 
@@ -57,7 +63,7 @@ class DataReader(object):
         return self.batch_num_train  
 
     def get_batch_num_test(self):
-        # int: retun the total number of batches in the test set
+        ''' int: retun the total number of batches in the test set'''
         if self.batch_num_test is not None:
             return self.batch_num_test
     
@@ -92,7 +98,8 @@ class DataReader(object):
         self.ith_train_batch += 1
         if self.ith_train_batch == self.batch_num_train:
             self.ith_train_batch = 0
-        return self.cur.fetchall()
+	data = self.cur.fetchall()
+        return data
 
     def get_next_test(self):
         '''
@@ -120,7 +127,7 @@ class DataReader(object):
         return self.cur.fetchall()
     
     def get_avg_rating(self):
-        # float: return the the average rating of all reviews on the training set
+        ''' float: return the the average rating of all reviews on the training set'''
         if self.small == 1:
             queryStr = 'select avg(score) from Review where whetherSmall = 1 and whetherTest = 0;'
         else:
@@ -133,7 +140,7 @@ class DataReader(object):
         input: a list of integers
         output: a list of floats: return a list of avg_ratings for the list of users
         '''
-        uidsStr = str(tuple(uids))
+        uidsStr = str(tuple([int(uid) for uid in uids]))
         if self.small == 1:
             queryStr = '''select uid, avgScoreTrainSmall 
                               from User 
@@ -151,7 +158,7 @@ class DataReader(object):
         input: a list of integers
         output: a list of floats: return a list of avg_ratings for the list of products
         '''
-        pidsStr = str(tuple(pids))
+        pidsStr = str(tuple([ int(pid) for pid in pids]))
         if self.small == 1:
             queryStr = '''select pid, avgScoreTrainSmall 
                               from Product 
@@ -170,11 +177,11 @@ class DataReader(object):
         output: return a tuple (prod_ids, ratings)
         which are Each user's previously used products and their ratings (their length should be same)
         '''
-        uidsStr = str(tuple(uids))
+        uidsStr = str(tuple([int(uid) for uid in uids]))
         if self.small == 1:
             queryStr = '''select uid, pid, score 
                               from Review 
-                              where uid in %s and whetherSmall = 1 and whetherTest = 0;''' % uidsStr
+                              where uid in %s and whetherSmall = 1 and whetherTest = 0;''' % (uidsStr, )
         else:
             queryStr = '''select uid, pid, score 
                               from Review 
@@ -194,7 +201,7 @@ class DataReader(object):
         output: return a tuple (user_ids, ratings)
         which are users that previously rated this product and their ratings (their length should be same)
         '''
-        pidsStr = str(tuple(pids))
+        pidsStr = str(tuple([int(pid) for pid in pids]))
         if self.small == 1:
             queryStr = '''select uid, pid, score 
                               from Review 
@@ -217,7 +224,7 @@ class DataReader(object):
         input: a list of integers (product_id)
         output: a tuple of tuples which are profile features of each product
         '''
-        pidsStr = str(tuple(pids))
+        pidsStr = str(tuple([int(pid) for pid in pids]))
         queryStr = '''select price, numAlsoBought, numAlsoViewed, numBoughtTogether, numBuyAfterViewing,
                              salesRank, super_category_1, super_category_2, super_category_3, 
                              super_category_4, super_category_5, super_category_6
