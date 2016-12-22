@@ -15,13 +15,14 @@ import time
 
 class LearnedRecommender(BaseRecommender):
 
-    def __init__(self, small, batch_size):
+    def __init__(self, small, batch_size, wd = 0.005):
 	BaseRecommender.__init__(self, small, batch_size)
 	self.user_num = self.reader.get_user_num()
 	self.prod_num = self.reader.get_prod_num()
 	self.batch_num_train = self.reader.get_batch_num_train()
 	self.batch_num_test = self.reader.get_batch_num_test()
-	self.epoch_num = 1 #50
+	self.epoch_num = 20
+	self.wd = wd
 	print "Number of Users : %d\tNumber of Prods : %d" \
 		% (self.user_num, self.prod_num)
 	print "Number of train batches : %d\tNumber of test batches : %d" \
@@ -58,10 +59,12 @@ class LearnedRecommender(BaseRecommender):
 	self.pred_y_rate = b + b_j + b_x + tf.matmul(r_xj, self.W) # [self.batch_size, self.prod_num]
 
 	# optimizing
-	loss_m = tf.sqrt(tf.squared_difference(self.y_rate, self.pred_y_rate))
-	self.loss = tf.reduce_sum(loss_m * self.y_mask)/self.batch_size
+	_loss = tf.sqrt(tf.squared_difference(self.y_rate, self.pred_y_rate))
+	self.l2_loss = tf.nn.l2_loss(self.W) + tf.nn.l2_loss(self.b_p) + tf.nn.l2_loss(self.b)
+	self.loss = tf.reduce_sum(_loss * self.y_mask)/self.batch_size
+	self.tot_loss = self.loss + self.wd * self.l2_loss
 	optimizer = tf.train.AdamOptimizer(0.01)
-	train_op = optimizer.minimize(self.loss)
+	train_op = optimizer.minimize(self.tot_loss)
 
 	# training
 
@@ -74,11 +77,10 @@ class LearnedRecommender(BaseRecommender):
 	    for i in range(self.batch_num_train):
 		_, loss = self.sess.run([train_op, self.loss], feed_dict = self.get_feed_dict(self.reader.get_next_train()))
 		tot_loss += loss
-		print "loss : %.2f" %(loss)
 
 	    avg_loss = tot_loss / self.batch_num_train
-	    print ("Epoch %d\tLoss\t%.2f\tTime %dmin" \
-		% (epoch, avg_loss, (time.time()-t)/60))
+	    print ("Epoch %d\tLoss\t%.4f\tTest-Los\t%.4f\tTime %dmin" \
+		% (epoch, avg_loss, self.test(), (time.time()-t)/60))
 
 	print ("Recommender is built!")
 
