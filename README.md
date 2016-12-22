@@ -35,13 +35,11 @@ code implementation and compare their performance and time costs.
 ### Instructions
 
 #### 1. Download data
-You need to have 'data' directory in your HOME.
+You need to have download the data first and it will take several minutes..
 
 ```bash
 chmod +x download.sh; ./download.sh 
 ```
-
-This will take several minutes.
 
 #### 2. Preprocess data and Create DB
 ```bash
