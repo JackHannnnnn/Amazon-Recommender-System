@@ -35,7 +35,7 @@ code implementation and compare their performance and time costs.
 ### Instructions
 
 #### 1. Download data
-You need to have download the data first and it will take several minutes..
+You need to download data to the directory HOME/data. This will take some time.
 
 ```bash
 chmod +x download.sh; ./download.sh 
