@@ -1,21 +1,21 @@
-# A Recommender System Supporting Multiple Algorithms
+## A Recommender System Supporting Multiple Algorithms
  
 Team members : Sewon Min, Chaofan Han
  
-## Project Abstract
+### Project Abstract
 In the current era of information explosion, recommender systems gain more and
 more popularity as they can make appropriate and customized recommendations to
 users based on users’ past behavior and profiles. It would be very interesting to
 explore how commonly used algorithms of a recommender system work through
 code implementation and compare their performance and time costs.
 
-## Data & Tools
+### Data & Tools
 - Amazon Review Data: http://snap.stanford.edu/data/web-Amazon-links.html
 - Programming language & Libraries: Python 2.7, Numpy, Pandas, Tensorflow
 - Database Management System: MySQL
 - Computing Instance: AWS EC2 m4.large
 
-## Task Assignment:
+### Task Assignment:
 - Data Preprocessing (CH)
 - Data Reader (CH)
 - Content-based Recommender System (CH)
@@ -24,7 +24,7 @@ code implementation and compare their performance and time costs.
 - Latent Factor Model (SM)
 - Bias Extension (SM)
 
-## Dataset Profile
+### Dataset Profile
 | Dataset range | Data size | Min # of reviews in each product | Min # of reviews in each user | # of unique users | # of unique items |
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | Large | 1121296 | 100 | 10 | 46824 | 5801 |
@@ -32,9 +32,9 @@ code implementation and compare their performance and time costs.
 
 
 
-## Progress
+### Instructions
 
-1. Download data
+#### 1. Download data
 You need to have 'data' directory in your HOME.
 
 ```bash
@@ -43,12 +43,12 @@ chmod +x download.sh; ./download.sh
 
 This will take several minutes.
 
-2. Preprocess data and Create DB
+#### 2. Preprocess data and Create DB
 ```bash
 python prepro/preprocess.py
 ```
 
-3. Run Recommender System
+#### 3. Run Recommenders
 ```bash
 python -m model.main
 ```
