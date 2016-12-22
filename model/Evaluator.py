@@ -26,8 +26,8 @@ class Evaluator(object):
 	self.recom_list = self.recommender.keys() if recom == 'all' else recom
 	self.recommenders = {}
 	self.hidden_list = hidden
-	self.small = small
 	self.batch_size = batch_size
+	self.small = small
 	print ("Evaluator of %s Dataset with batch size %d" \
 		%('small' if small else 'large', batch_size))
 
@@ -57,7 +57,7 @@ class Evaluator(object):
 	t3 = time.time()
 	build_time = (t2-t1)/60
 	eval_time = (t3-t2)/60
-	print ("Recommender [%s]\t: Error : %.4f (build %dmin eval %dmin)" \
+	print ("Recommender [%s]\t: Error : %.4f (build %.3fmin eval %.3fmin)" \
 		%(config, error, build_time, eval_time))
 	self.recommenders[config] = recommender
 
