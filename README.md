@@ -1,38 +1,38 @@
-# amazon-recommender-system
-recommender system of amazon product ( for final project of CSE544 )
-
-## An Optimized Recommender System from Integrating Multiple Algorithms
+# A Recommender System Supporting Multiple Algorithms
  
 Team members : Sewon Min, Chaofan Han
  
-### Project Abstract
-This project aims to build an integrated recommender system with versatile features based on the Amazon reviews dataset. This project tries to solve problems confronting present recommender systems such as how to improve the degree of automation, how to make algorithms run faster and more robust with parallel computation.
+## Project Abstract
+In the current era of information explosion, recommender systems gain more and
+more popularity as they can make appropriate and customized recommendations to
+users based on users’ past behavior and profiles. It would be very interesting to
+explore how commonly used algorithms of a recommender system work through
+code implementation and compare their performance and time costs.
 
-### The main contents of this project are following:
-- Implementation of various algorithms
-- Different ways of ensemble learning of the algorithms
-- Support of parallel tasks on distributed system, and performance/time comparison of each algorithm by the number of computation instances
-- Implementation of demo program of the final recommender system
+## Data & Tools
+- Amazon Review Data: http://snap.stanford.edu/data/web-Amazon-links.html
+- Programming language & Libraries: Python 2.7, Numpy, Pandas, Tensorflow
+- Database Management System: MySQL
+- Computing Instance: AWS EC2 m4.large
 
-### Algorithms to be implemented:
-- Content-based Recommender System
-- Collaborative Filtering
-- Weight Learning
-- Latent Factor Model
-- Bias Extension
-- Ensemble Model 
+## Task Assignment:
+- Data Preprocessing (CH)
+- Data Reader (CH)
+- Content-based Recommender System (CH)
+- Collaborative Filtering (CH)
+- Weight Learned (SM)
+- Latent Factor Model (SM)
+- Bias Extension (SM)
 
-### Datasets
-- Amazon Review Data accessed from (http://snap.stanford.edu/data/web-Amazon-links.html)
-- Number of reviews : 34,686,770
-- Number of users : 6,643,669 (56,772 with more than 50 reviews)
-- Number of products : 2,441,053
-
-### Tools
-- Python, Myria, AWS
+## Dataset Profile
+| Dataset range | Data size | Min # of reviews in each product | Min # of reviews in each user | # of unique users | # of unique items |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| Large | 1121296 | 100 | 10 | 46824 | 5801 |
+| Small | 39126 | 150 | 15 | 1504 | 165 |
 
 
-### Progress
+
+## Progress
 
 1. Download data
 You need to have 'data' directory in your HOME.
@@ -41,9 +41,9 @@ You need to have 'data' directory in your HOME.
 chmod +x download.sh; ./download.sh 
 ```
 
-This will takes several minutes.
+This will take several minutes.
 
-2. Preprocess data and create DB
+2. Preprocess data and Create DB
 ```bash
 python prepro/preprocess.py
 ```
@@ -52,7 +52,7 @@ python prepro/preprocess.py
 ```bash
 python -m model.main
 ```
-It builds recommender with train data and also evaluates performance on test data. If you want to specift certain recommender system, you can use '--recom'.
+It builds a recommender with the training data and also evaluates the performance on the test data. If you want to specify a certain recommender system, you can use '--recom'.
 
 Content Based : 'cb'
 Collaborative Filtering : 'cf'
@@ -64,16 +64,16 @@ For example, if you want to run Weight Learned Recommender,
 ```bash
 python -m model.main --recom l
 ```
-If you want to run Content Based and Collaborative Filtering,
+If you want to run both Content Based and Collaborative Filtering Recommenders,
 ```bash
 python -m model.main --recom cb cf
 ```
-It runs recommender in small dataset by default. If you want to run in large dataset, you can use '--small False'. Batch size is 128 by default. If you want to change it, you can use '--batch_size'. For example,
+It runs a recommender on the small dataset by default. If you want to run on a large dataset, you can use '--small False'. Batch size is 128 by default. If you want to change it, you can use '--batch_size'. For example,
 ```bash
 python -m model.main --small False --batch_size 256
 ```
 
 ### References
-- M. Pazzani, D. Billsus, Content-based Recommendation System.
-- G. Adomavicius and A. Tuzhilin, “Towards the next generation of recommender systems: a survey of the state-of-the-art and possible extensions,” IEEE Trans. on Data and Knowledge Engineering 17:6, pp. 734– 749, 2005.
- 
+- [1] G. Adomavicius and A. Tuzhilin. 2005. “Towards the next generation of recommender systems: a survey of the state-of-the-art and possible extensions.” IEEE Transactions on Knowledge and Data Engineering 17 (6): 734– 749.
+- [2] Y Koren, R Bell, C Volinsky. 2009. “Matrix factorization techniques for recommender systems.” Computer 42 (8): 30-37.
+- [3] J. McAuley, C. Targett, J. Shi, A. van den Hengel. 2015. “Image-based recommendations on styles and substitutes.” SIGIR.
