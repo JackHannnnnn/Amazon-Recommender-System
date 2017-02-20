@@ -293,6 +293,7 @@ def preprocessData():
                        INTO TABLE Review 
                        fields terminated by '\t' 
                        lines terminated by '\n';''')
+    con.commit()
     con.close()
 
 
